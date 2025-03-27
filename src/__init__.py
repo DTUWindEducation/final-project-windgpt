@@ -4,10 +4,6 @@ import pandas as pd
 def load_data(file_path):
     return pd.read_csv(file_path, index_col=0, parse_dates=True)
 
-FILE_PATH = './inputs/Location1.csv'
-data = load_data(FILE_PATH)
-data.plot(subplots=True)
-
 def scale_data(data):
     return None
 
