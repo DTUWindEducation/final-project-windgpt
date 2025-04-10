@@ -5,10 +5,10 @@ from sklearn.preprocessing import MinMaxScaler
 
 class DataLoader:
     
-    def __init__(self, file_name, lag_dim, forecast_dim, data_eda_bool):
-        
+    def __init__(self, file_path, lag_dim=10, forecast_dim=1, data_eda_bool=False):
+        # TODO: Decide if we want to use file path or folder path as input
         # Save attributes
-        self.raw_data_dir = Path("data") / file_name
+        self.file_path = file_path
         self.lag_dim = lag_dim 
         self.forecast_dim = forecast_dim
         
@@ -16,7 +16,7 @@ class DataLoader:
         self.data_cleaning()
         self.data_scaling()
         self.data_XY_preparation()
-        self.data_processing()
+        #self.data_processing()
         
         if data_eda_bool:
             self.data_eda() 
@@ -25,10 +25,14 @@ class DataLoader:
         """
         Just a function to read, parse and clean the data
         """
+        # TODO: Decide if we want to drop data columns or not
         
-        self.raw_data = pd.read_csv(raw_data_dir, index_col=0, parse_dates=True)
+        df = pd.read_csv(self.file_path, index_col=0, parse_dates=True)
+        clean_df = df.drop(columns=['temperature_2m','relativehumidity_2m','dewpoint_2m',
+                                     'windspeed_10m','winddirection_10m',
+                                     'winddirection_100m','windgusts_10m'])
+        self.clean_data = clean_df.copy()
 
-        raw_data
         
     def data_scaling(self):
         """function to scale the data
@@ -36,8 +40,16 @@ class DataLoader:
         input : cleaned dataset
         output: scaled dataset
         """
-        
-        
+
+        # Scale the data between 0 and 1 using MinMaxScaler
+        scaler = MinMaxScaler()
+        self.scaled_data = pd.DataFrame(scaler.fit_transform(self.clean_data), columns=self.clean_data.columns, index=self.clean_data.index)
+
+        # Save the scaler for inverse transformation later if needed
+        self.scaler = scaler
+
+        # Save the scaled data to a dataframe
+        self.scaled_data = pd.DataFrame(self.scaled_data, columns=self.clean_data.columns, index=self.clean_data.index)
     
     def data_XY_preparation(self):
 
@@ -46,22 +58,26 @@ class DataLoader:
         input: cleaned scaled dataset
         output: X Y vectors 
         """
-        l = 30
-        m = 3
-        n = 5
-
-        np_data = raw_data.values   # Convert to the numpy array for slicing data
+        l = self.lag_dim
+        m = self.forecast_dim
+        n = self.scaled_data.shape[1]
+        np_data = self.scaled_data.values   # Convert to the numpy array for slicing data
         N = np_data.shape[0]        # Total number of samples
 
-        k = N - (l + m + n)
 
-        # Create Input and output Slice
-        in_slice = np.array([range(i, i + l) for i in range(k)])
-        op_slice = np.array([range(i + l + m, i + l + m + n) for i in range(k)])
+        trainX = []
+        trainY = []
 
+        for i in range(N-l-m+1):
+            # Create the input sequence (X) and output value (y)
+            X = np_data[i:l+i, :]
+            y = np_data[l+i:l+m+i, -1]  # Assuming the target variable is the last column
 
-        in_data = np_data[in_slice,:]
-        print(in_data.shape)
+            trainX.append(X)
+            trainY.append(y)
+
+        self.trainX = np.array(trainX)
+        self.trainY = np.array(trainY)
         
     def data_eda(self):
         
