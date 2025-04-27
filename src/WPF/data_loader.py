@@ -5,12 +5,13 @@ from sklearn.preprocessing import MinMaxScaler
 
 class DataLoader:
     
-    def __init__(self, file_path, lag_dim=10, forecast_dim=1, data_eda_bool=False):
+    def __init__(self, file_path, lag_dim=10, forecast_dim=1, train_test_pct=0.8, data_eda_bool=False):
         # TODO: Decide if we want to use file path or folder path as input
         # Save attributes
         self.file_path = file_path
         self.lag_dim = lag_dim 
         self.forecast_dim = forecast_dim
+        self.train_test_pct = train_test_pct
         
         # Call methods
         self.data_cleaning()
@@ -62,22 +63,32 @@ class DataLoader:
         m = self.forecast_dim
         n = self.scaled_data.shape[1]
         np_data = self.scaled_data.values   # Convert to the numpy array for slicing data
-        N = np_data.shape[0]        # Total number of samples
+        N = np_data.shape[0]        # Total number of data points
 
-
-        trainX = []
-        trainY = []
+        # Create empty lists to store the input sequences and output values
+        X = []
+        Y = []
 
         for i in range(N-l-m+1):
             # Create the input sequence (X) and output value (y)
-            X = np_data[i:l+i, :]
+            x = np_data[i:l+i, :]
             y = np_data[l+i:l+m+i, -1]  # Assuming the target variable is the last column
 
-            trainX.append(X)
-            trainY.append(y)
+            X.append(x)
+            Y.append(y)
 
-        self.trainX = np.array(trainX)
-        self.trainY = np.array(trainY)
+        self.X = np.array(X)
+        self.X_2D = np.reshape(self.X, (self.X.shape[0], self.X.shape[1]*self.X.shape[2]))  
+        self.Y = np.array(Y)
+
+        # split the data into training and testing sets
+        split_index = int(len(self.Y) * self.train_test_pct)
+        self.X_train = self.X[:split_index]
+        self.X_train_2D = self.X_2D[:split_index]
+        self.Y_train = self.Y[:split_index]
+        self.X_test = self.X[split_index:]
+        self.X_test_2D = self.X_2D[split_index:]
+        self.Y_test = self.Y[split_index:]
         
     def data_eda(self):
         
