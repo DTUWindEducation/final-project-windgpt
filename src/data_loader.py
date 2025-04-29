@@ -1,45 +1,67 @@
+"""Importing all necessary modules"""
 import pandas as pd
 import numpy as np
-from pathlib import Path
+
 from sklearn.preprocessing import MinMaxScaler
+from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
+from statsmodels.tsa.seasonal import STL
+
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 import seaborn as sns
-from sklearn.preprocessing import MinMaxScaler
-from matplotlib.patches import Rectangle
-from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
-from scipy.signal import periodogram, welch
+from scipy.signal import welch
+
 class DataLoader:
-    
+    """
+    Load, clean, scale, window, and optionally perform EDA on time-series data.
+
+    Attributes:
+        file_path (str): Path to the CSV file.
+        lag_dim (int): Number of lag steps for input windows.
+        forecast_dim (int): Number of steps to forecast.
+        clean_data (pd.DataFrame): Cleaned (dropped columns) data.
+        scaled_data (pd.DataFrame): MinMax-scaled data.
+        scaler (MinMaxScaler): Fitted scaler instance.
+        train_x (np.ndarray): Input feature windows.
+        train_y (np.ndarray): Forecast target windows.
+    """
+
     def __init__(self, file_path, lag_dim=10, forecast_dim=1, data_eda_bool=False):
+        """
+        Initialize and run cleaning, scaling, and windowing.
+
+        Args:
+            file_path (str): CSV file to load.
+            lag_dim (int): Input window length.
+            forecast_dim (int): Forecast horizon.
+            data_eda_bool (bool): If True, run EDA plots.
+        """
         # TODO: Decide if we want to use file path or folder path as input
         # Save attributes
         self.file_path = file_path
-        self.lag_dim = lag_dim 
+        self.lag_dim = lag_dim
         self.forecast_dim = forecast_dim
-        
+
         # Call methods
         self.data_cleaning()
         self.data_scaling()
         self.data_XY_preparation()
         #self.data_processing()
-        
+
         if data_eda_bool:
-            self.data_eda() 
+            self.data_eda()
 
     def data_cleaning(self):
         """
-        Just a function to read, parse and clean the data
+        Read CSV, parse dates, drop unused weather columns.
         """
-        # TODO: Decide if we want to drop data columns or not
-        
+        # Decide which data columns we want to drop
         df = pd.read_csv(self.file_path, index_col=0, parse_dates=True)
         clean_df = df.drop(columns=['temperature_2m','relativehumidity_2m','dewpoint_2m',
                                      'windspeed_10m','winddirection_10m',
                                      'winddirection_100m','windgusts_10m'])
         self.clean_data = clean_df.copy()
 
-        
     def data_scaling(self):
         """function to scale the data
         
@@ -49,44 +71,48 @@ class DataLoader:
 
         # Scale the data between 0 and 1 using MinMaxScaler
         scaler = MinMaxScaler()
-        self.scaled_data = pd.DataFrame(scaler.fit_transform(self.clean_data), columns=self.clean_data.columns, index=self.clean_data.index)
-
+        self.scaled_data = pd.DataFrame(scaler.fit_transform(self.clean_data),
+                                        columns=self.clean_data.columns,
+                                        index=self.clean_data.index)
+        
         # Save the scaler for inverse transformation later if needed
         self.scaler = scaler
 
         # Save the scaled data to a dataframe
-        self.scaled_data = pd.DataFrame(self.scaled_data, columns=self.clean_data.columns, index=self.clean_data.index)
-    
+        self.scaled_data = pd.DataFrame(self.scaled_data,
+                                        columns=self.clean_data.columns,
+                                        index=self.clean_data.index)
+
     def data_XY_preparation(self):
 
-        """ Here slices for windowing are created
+        """ Create sliding windows X (lag_dim) and Y (forecast_dim).
         
         input: cleaned scaled dataset
         output: X Y vectors 
         """
         l = self.lag_dim
         m = self.forecast_dim
-        n = self.scaled_data.shape[1]
-        np_data = self.scaled_data.values   # Convert to the numpy array for slicing data
-        N = np_data.shape[0]        # Total number of samples
+        #n = self.scaled_data.shape[1]
+        # Convert to the numpy array for slicing data
+        np_data = self.scaled_data.values
+        n = np_data.shape[0] # Total number of samples
 
 
-        trainX = []
-        trainY = []
+        train_x = []
+        train_y = []
 
-        for i in range(N-l-m+1):
+        for i in range(n-l-m+1):
             # Create the input sequence (X) and output value (y)
-            X = np_data[i:l+i, :]
+            x = np_data[i:l+i, :]
             y = np_data[l+i:l+m+i, -1]  # Assuming the target variable is the last column
 
-            trainX.append(X)
-            trainY.append(y)
+            train_x.append(x)
+            train_y.append(y)
 
-        self.trainX = np.array(trainX)
-        self.trainY = np.array(trainY)
-        
+        self.train_x = np.array(train_x)
+        self.train_y = np.array(train_y)
+
     def data_eda(self):
-        
         """
         Explanatory Data Analysis (EDA):
         Pre-processing:
@@ -94,10 +120,13 @@ class DataLoader:
             - Scale raw data for EDA
         1. Plot raw tine series data of the target variable (Power)
         2. Plot a Histrogramm of the target variable (Power) and kernel density estimates
-        3. Plot a boxplot of the target variable grouped by the hour of the day, the day of the week, the month of the year
+        3. Plot a boxplot of the target variable grouped by the hour of the day,
+            the day of the week, the month of the year
         4. Plot a correlation matrix of all scaled features
-        5. Plot autocorrelation and partial autocorrelation plots for the target variable (Power)
-        6. Plot the seasonal decomposition of the target variable (Power) to identify trends, seasonality, and residuals
+        5. Plot autocorrelation and partial autocorrelation plots for the target
+            variable (Power)
+        6. Plot the seasonal decomposition of the target variable (Power) to identify trends,
+            seasonality, and residuals
         7. Plot Welch's method for spectral analysis
         """
 
@@ -155,7 +184,9 @@ class DataLoader:
         plt.show()
 
         # 3. Boxplots by hour, day, month
-        for grp, title in [('hour', 'Hour of Day'), ('day_of_week', 'Day of Week'), ('month', 'Month')]:
+        for grp, title in [('hour', 'Hour of Day'),
+                           ('day_of_week', 'Day of Week'),
+                           ('month', 'Month')]:
             plt.figure(figsize=(10, 4))
             sns.boxplot(x=df_raw[grp], y=df_raw['Power'])
             plt.title(f'Power by {title}')
@@ -166,7 +197,8 @@ class DataLoader:
         # 4. Correlation matrix of scaled raw features
         corr_raw = df_scaled_raw.corr()
         plt.figure(figsize=(8, 6))
-        ax = sns.heatmap(corr_raw, annot=True, fmt='.2f', cmap='coolwarm', cbar_kws={'label': 'Correlation'})
+        ax = sns.heatmap(corr_raw, annot=True, fmt='.2f', cmap='coolwarm',
+                         cbar_kws={'label': 'Correlation'})
         plt.title('Correlation Matrix of Scaled Raw Features')
         # Highlight row/column for Power
         idx = corr_raw.columns.get_loc('Power')
@@ -191,20 +223,25 @@ class DataLoader:
         # 5.2 Stationarity & ACF/PACF on first-differenced Power
         y = df_raw['Power']
         y_diff = y.diff().dropna()
-        plt.figure(figsize=(8,3)); plot_acf(y_diff, lags=48); plt.title('ACF of ΔPower'); plt.tight_layout(); plt.show()
-        plt.figure(figsize=(8,3)); plot_pacf(y_diff, lags=48); plt.title('PACF of ΔPower'); plt.tight_layout(); plt.show()
+        plt.figure(figsize=(8,3))
+        plot_acf(y_diff, lags=48)
+        plt.title('ACF of ΔPower')
+        plt.tight_layout()
+        plt.show()
+        plt.figure(figsize=(8,3))
+        plot_pacf(y_diff, lags=48)
+        plt.title('PACF of ΔPower')
+        plt.tight_layout()
+        plt.show()
 
 
         # 6. Multi-seasonal decomposition (weekly & annual)
-        from statsmodels.tsa.seasonal import STL
         try:
             # MSTL now only takes 'periods'
             from statsmodels.tsa.seasonal import MSTL
             decomp = MSTL(y, periods=[168, 8760]).fit()
             fig = decomp.plot()
         except ImportError:
-            # Fallback to back‐to‐back STL if MSTL isn’t available
-            from statsmodels.tsa.seasonal import STL
             # first extract weekly seasonality
             stl_week = STL(y, period=168).fit()
             resid = y - stl_week.seasonal
@@ -220,10 +257,15 @@ class DataLoader:
         fs = 1.0  # 1 sample per hour
         freqs, psd = welch(y.fillna(method='ffill'), fs=fs,
                         window='hann', nperseg=24*7, noverlap=24*3)
-        periods = 1/freqs[1:]; power_spec = psd[1:]
+        periods = 1/freqs[1:]
+        power_spec = psd[1:]
         plt.figure(figsize=(8,4))
         plt.loglog(periods, power_spec)
         for p,label in [(24,'24 h'), (168,'168 h (weekly)'), (8760,'8760 h (annual)')]:
             plt.axvline(p, linestyle='--', alpha=0.7, label=label)
-        plt.xlabel('Period (hours)'); plt.ylabel('Spectral density')
-        plt.title('Welch Periodogram (log–log)'); plt.legend(); plt.tight_layout(); plt.show()
+        plt.xlabel('Period (hours)')
+        plt.ylabel('Spectral density')
+        plt.title('Welch Periodogram (log–log)')
+        plt.legend()
+        plt.tight_layout()
+        plt.show()
