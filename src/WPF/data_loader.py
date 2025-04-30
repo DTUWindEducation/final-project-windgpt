@@ -47,7 +47,6 @@ class DataLoader:
         self.data_cleaning()
         self.data_scaling()
         self.data_XY_preparation()
-        #self.data_processing()
 
         if data_eda_bool:
             self.data_eda()
@@ -101,7 +100,7 @@ class DataLoader:
         X = []
         Y = []
 
-        for i in range(n-l-m+1):
+        for i in range(N-l-m+1):
             # Create the input sequence (X) and output value (y)
             x = np_data[i:l+i, :]
             x = np_data[i:l+i, :]

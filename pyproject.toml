@@ -22,7 +22,9 @@ dependencies = [
     "numpy",
     "scipy", 
     "tqdm",
-    "scikit-learn"
+    "scikit-learn",
+    "statsmodels",
+    "seaborn"
 ]
 
 [project.urls]
