@@ -13,15 +13,11 @@ loc1 = DataLoader(folder_path, train_test_split=0.70, site_index=1)
 
 #loc1.data_eda()
 
-# model = LinearRegression()
-# model.fit(loc1.X_train_2D, loc1.Y_train)
-# Y_pred = model.predict(loc1.X_test_2D)
+linear_runner = ModelRunner(folder_path, model_type='linear_regression', train_test_split=0.70)
+linear_runner.execute()
 
-# print("Mean Squared Error:", mean_squared_error(loc1.Y_test, Y_pred))
-# print("Mean Absolute Error:", mean_absolute_error(loc1.Y_test, Y_pred))
+svm_runner = ModelRunner(folder_path, model_type='svm', train_test_split=0.70)
+svm_runner.execute()
 
-
-
-linear_model = ModelRunner(folder_path, train_test_split=0.70)
-
-linear_model.execute()
+baseline_runner = ModelRunner(folder_path, model_type='baseline', train_test_split=0.70)
+baseline_runner.execute()
