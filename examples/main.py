@@ -13,11 +13,17 @@ loc1 = DataLoader(folder_path, train_test_split=0.70, site_index=1)
 
 #loc1.data_eda()
 
-linear_runner = ModelRunner(folder_path, model_type='linear_regression', train_test_split=0.70)
-linear_runner.execute()
+# linear_runner = ModelRunner(folder_path, model_type='linear_regression', train_test_split=0.70)
+# linear_runner.execute()
 
-svm_runner = ModelRunner(folder_path, model_type='svm', train_test_split=0.70)
-svm_runner.execute()
+# svm_runner = ModelRunner(folder_path, model_type='svm', train_test_split=0.70)
+# svm_runner.execute()
 
-baseline_runner = ModelRunner(folder_path, model_type='baseline', train_test_split=0.70)
-baseline_runner.execute()
+# baseline_runner = ModelRunner(folder_path, model_type='baseline', train_test_split=0.70)
+# baseline_runner.execute()
+
+m  = ModelRunner(folder_path, forecast_dim=3)
+m.execute()
+m.post_process()
+
+n = ModelRunner(folder_path, forecast_dim=1)

@@ -64,16 +64,20 @@ class ModelRunner(DataLoader):
     def post_process(self):
         df = pd.DataFrame(self.clean_data[self.clean_data.index.isin(self.test_index)]
             ['Power'])
-        f = self.Y_pred.shape[1]
-        for i in range(f):
-            column_name = f"Power_{i+1}_hour_predicted"
-            s = pd.Series(self.Y_pred[:, i])
-            shifted_series = s.shift(i)
-            tail = s[-i:] if i > 0 else s[0:0]
-            nans = pd.Series(np.repeat(np.nan, f-i-1))
-            column_data = pd.concat((shifted_series, tail, nans), ignore_index=True)
-            column_data.index = df.index
-            df[column_name] = column_data
+        f = self.forecast_dim
+        if f>1:
+            for i in range(f):
+                column_name = f"Power_{i+1}_hour_predicted"
+                s = pd.Series(self.Y_pred[:, i])
+                shifted_series = s.shift(i)
+                tail = s[-i:] if i > 0 else s[0:0]
+                nans = pd.Series(np.repeat(np.nan, f-i-1))
+                column_data = pd.concat((shifted_series, tail, nans), ignore_index=True)
+                column_data.index = df.index
+                df[column_name] = column_data
+        else:
+            df["Power_predicted"] = self.Y_pred
+            
         self.result_df = df
 
 
