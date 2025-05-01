@@ -26,7 +26,7 @@ class DataLoader:
         train_y (np.ndarray): Forecast target windows.
     """
 
-    def __init__(self, file_path, lag_dim=10, forecast_dim=1, train_test_pct=0.8, data_eda_bool=False):
+    def __init__(self, folder_path, site_index=1, lag_dim=10, forecast_dim=1, train_test_split=0.7, data_eda_bool=False):
         """
         Initialize and run cleaning, scaling, and windowing.
 
@@ -36,12 +36,11 @@ class DataLoader:
             forecast_dim (int): Forecast horizon.
             data_eda_bool (bool): If True, run EDA plots.
         """
-        # TODO: Decide if we want to use file path or folder path as input
         # Save attributes
-        self.file_path = file_path
+        self.file_path = folder_path / f"Location{site_index}.csv"
         self.lag_dim = lag_dim
         self.forecast_dim = forecast_dim
-        self.train_test_pct = train_test_pct
+        self.train_test_split = train_test_split
         
         # Call methods
         self.data_cleaning()
@@ -114,7 +113,7 @@ class DataLoader:
         self.Y = np.array(Y)
 
         # split the data into training and testing sets
-        split_index = int(len(self.Y) * self.train_test_pct)
+        split_index = int(len(self.Y) * self.train_test_split)
         self.X_train = self.X[:split_index]
         self.X_train_2D = self.X_2D[:split_index]
         self.Y_train = self.Y[:split_index]
