@@ -56,9 +56,8 @@ class DataLoader:
         """
         # Decide which data columns we want to drop
         df = pd.read_csv(self.file_path, index_col=0, parse_dates=True)
-        clean_df = df.drop(columns=['temperature_2m','relativehumidity_2m','dewpoint_2m',
-                                     'windspeed_10m','winddirection_10m',
-                                     'winddirection_100m','windgusts_10m'])
+        columns = ['windspeed_100m', 'Power']
+        clean_df = df[columns]
         self.clean_data = clean_df.copy()
 
     def data_scaling(self):
@@ -91,7 +90,6 @@ class DataLoader:
         """
         l = self.lag_dim
         m = self.forecast_dim
-        n = self.scaled_data.shape[1]
         np_data = self.scaled_data.values   # Convert to the numpy array for slicing data
         N = np_data.shape[0]        # Total number of data points
 
@@ -101,7 +99,6 @@ class DataLoader:
 
         for i in range(N-l-m+1):
             # Create the input sequence (X) and output value (y)
-            x = np_data[i:l+i, :]
             x = np_data[i:l+i, :]
             y = np_data[l+i:l+m+i, -1]  # Assuming the target variable is the last column
 
