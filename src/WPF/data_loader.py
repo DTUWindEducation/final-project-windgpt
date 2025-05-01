@@ -56,9 +56,10 @@ class DataLoader:
         """
         # Decide which data columns we want to drop
         df = pd.read_csv(self.file_path, index_col=0, parse_dates=True)
-        columns = ['windspeed_100m', 'Power']
-        clean_df = df[columns]
+        self.columns = ['windspeed_100m', 'Power']
+        clean_df = df[self.columns]
         self.clean_data = clean_df.copy()
+        self.index = clean_df.index
 
     def data_scaling(self):
         """function to scale the data
@@ -69,17 +70,14 @@ class DataLoader:
 
         # Scale the data between 0 and 1 using MinMaxScaler
         scaler = MinMaxScaler()
-        self.scaled_data = pd.DataFrame(scaler.fit_transform(self.clean_data),
-                                        columns=self.clean_data.columns,
-                                        index=self.clean_data.index)
+        scaled_data = scaler.fit_transform(self.clean_data[self.columns[:-1]])
+        scaled_df = self.clean_data.copy()
+        scaled_df[self.columns[:-1]] = scaled_data
+        self.scaled_data = scaled_df.copy()
         
         # Save the scaler for inverse transformation later if needed
         self.scaler = scaler
 
-        # Save the scaled data to a dataframe
-        self.scaled_data = pd.DataFrame(self.scaled_data,
-                                        columns=self.clean_data.columns,
-                                        index=self.clean_data.index)
 
     def data_XY_preparation(self):
 
@@ -104,7 +102,7 @@ class DataLoader:
 
             X.append(x)
             Y.append(y)
-
+    
         self.X = np.array(X)
         self.X_2D = np.reshape(self.X, (self.X.shape[0], self.X.shape[1]*self.X.shape[2]))  
         self.Y = np.array(Y)
@@ -117,6 +115,9 @@ class DataLoader:
         self.X_test = self.X[split_index:]
         self.X_test_2D = self.X_2D[split_index:]
         self.Y_test = self.Y[split_index:]
+        
+        self.train_index = self.index[l:self.X_train.shape[0]+l]
+        self.test_index = self.index[l+self.X_train.shape[0]:]
         
     # def data_eda(self,
     #              variable_name: str = 'Power',
