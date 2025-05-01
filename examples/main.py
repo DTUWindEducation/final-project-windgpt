@@ -22,6 +22,6 @@ loc1 = DataLoader(folder_path, train_test_split=0.70, site_index=1)
 
 
 
-linear_model = ModelRunner("inputs/Location2.csv", train_test_pct=0.99)
+linear_model = ModelRunner(folder_path, train_test_split=0.70)
 
 linear_model.execute()
