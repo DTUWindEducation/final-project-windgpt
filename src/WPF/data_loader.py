@@ -26,7 +26,8 @@ class DataLoader:
         train_y (np.ndarray): Forecast target windows.
     """
 
-    def __init__(self, folder_path, site_index=1, lag_dim=10, forecast_dim=1, train_test_split=0.7, data_eda_bool=False):
+    def __init__(self, folder_path, site_index=1, lag_dim=10, forecast_dim=1, train_test_split=0.7,
+                 plot_time_series=False, data_eda_bool=False):
         """
         Initialize and run cleaning, scaling, and windowing.
 
@@ -46,6 +47,13 @@ class DataLoader:
         self.data_cleaning()
         self.data_scaling()
         self.data_XY_preparation()
+
+        if plot_time_series:
+            self.plot_time_series(folder_path,
+                                  site_index=site_index,
+                                  variable_name='Power',
+                                  starting_time='2017-01-01 00:00',
+                                  ending_time='2021-12-31 23:00')
 
         if data_eda_bool:
             self.data_eda()
@@ -118,201 +126,41 @@ class DataLoader:
         
         self.train_index = self.index[l:self.X_train.shape[0]+l]
         self.test_index = self.index[l+self.X_train.shape[0]:]
-        
-    # def data_eda(self,
-    #              variable_name: str = 'Power',
-    #              site_index: int = 2,
-    #              starting_time: str = '2017-01-01 00:00',
-    #              ending_time: str = '2021-12-31 23:00'):
-    #     """
-    #     Explanatory Data Analysis (EDA):
-
-    #     Args:
-    #         variable_name (str): Column prefix of the variable to plot (e.g., 'wind_speed_100m' or 'Power').
-    #         site_index (int): Site number (e.g., 1, 2, 3 or 4).  --> maybe should be moved to general class
-    #         starting_time (str): Period start as 'YYYY-MM-DD HH:MM'.
-    #         ending_time (str): Period end as 'YYYY-MM-DD HH:MM'.
-
-    #     Pre-processing:
-    #         - Read the full raw dataset
-    #         - Scale raw data for EDA
-    #     1. Plot raw tine series data of the target variable (Power)
-    #     2. Plot a Histrogramm of the target variable (Power) and kernel density estimates
-    #     3. Plot a boxplot of the target variable grouped by the hour of the day,
-    #         the day of the week, the month of the year
-    #     4. Plot a correlation matrix of all scaled features
-    #     5. Plot autocorrelation and partial autocorrelation plots for the target
-    #         variable (Power)
-    #     6. Plot the seasonal decomposition of the target variable (Power) to identify trends,
-    #         seasonality, and residuals
-    #     7. Plot Welch's method for spectral analysis
-    #     """
-
-    #     df_raw = pd.read_csv(self.file_path, index_col=0, parse_dates=True).sort_index()
-
-    #     # Construct column name for the selected site
-    #     col = f"{variable_name}_site{site_index}"
-    #     if col not in df_raw.columns:
-    #         raise ValueError(f"Column '{col}' not found in data.")
-
-    #     # Filter by time period
-    #     df_raw = df_raw.loc[starting_time:ending_time]
-
-    #     # Scale raw data for EDA
-    #     scaler_eda = MinMaxScaler()
-    #     df_scaled_raw = pd.DataFrame(
-    #         scaler_eda.fit_transform(df_raw),
-    #         columns=df_raw.columns,
-    #         index=df_raw.index
-    #     )
-
-    #     # Histograms of scaled raw features
-    #     plt.figure(figsize=(10, 6))
-    #     df_scaled_raw.hist(bins=50)
-    #     plt.suptitle('Histograms of Scaled Raw Features')
-    #     plt.tight_layout(rect=[0, 0.03, 1, 0.95])
-    #     plt.show()
-
-    #     # Extract time-based features on raw data
-    #     df_raw['hour'] = df_raw.index.hour
-    #     df_raw['day_of_week'] = df_raw.index.day_name()
-    #     df_raw['month'] = df_raw.index.month
-    #     print("Extracted time-based features (first 5 rows):")
-    #     print(df_raw[['hour', 'day_of_week', 'month']].head(), "")
-
-    #     ######################## Overall plot, used during first Draft of EDA, can be removed ########################
-
-    #     # 1. Plot each year's raw time series of Power in subplots
-    #     years = sorted(df_raw.index.year.unique())
-    #     n_years = len(years)
-    #     fig, axes = plt.subplots(n_years, 1, figsize=(10, 2 * n_years), sharex=False)
-    #     if n_years == 1:
-    #         axes = [axes]
-    #     for ax, year in zip(axes, years):
-    #         df_year = df_raw[df_raw.index.year == year]
-    #         ax.plot(df_year.index, df_year['Power'], label=f'Power {year}')
-    #         ax.set_title(f'Power over Time: {year}')
-    #         ax.set_xlabel('Time')
-    #         ax.set_ylabel('Power')
-    #         ax.legend()
-    #     plt.tight_layout()
-    #     plt.show()
-
-    #     #######################################################################################################
-
-    #     # 1. Plot raw time series of the selected variable
-    #     plt.figure(figsize=(10, 4))
-    #     plt.plot(df_raw.index, df_raw[col], label=col)
-    #     plt.title(f'{col} over Time')
-    #     plt.xlabel('Time')
-    #     plt.ylabel(variable_name)
-    #     plt.legend()
-    #     plt.tight_layout()
-    #     plt.show()
-
-    #     # 2. Histogram + KDE of raw Power
-    #     fig, ax1 = plt.subplots()
-    #     df_raw[col].hist(bins=50, alpha=0.6, ax=ax1, label='Count')
-    #     ax2 = ax1.twinx()
-    #     df_raw[col].plot(kind='kde', ax=ax2, label='KDE')
-    #     ax1.set_xlabel(variable_name)
-    #     ax1.set_ylabel('Count')
-    #     ax2.set_ylabel('Density')
-    #     fig.suptitle(f'{variable_name}: Histogram & KDE')
-    #     ax1.legend(loc='upper left')
-    #     ax2.legend(loc='upper right')
-    #     plt.show()
-
-    #     # 3. Boxplots by hour, day, month
-    #     for grp, title in [('hour', 'Hour of Day'),
-    #                        ('day_of_week', 'Day of Week'),
-    #                        ('month', 'Month')]:
-    #         plt.figure(figsize=(10, 4))
-    #         sns.boxplot(x=df_time[grp], y=df_time[col])
-    #         plt.title(f'{variable_name} by {title}')
-    #         plt.xlabel(title)
-    #         plt.ylabel(variable_name)
-    #         plt.show()
-
-    #     # 4. Correlation matrix of scaled raw features
-    #     corr_raw = df_scaled_raw.corr()
-    #     plt.figure(figsize=(8, 6))
-    #     ax = sns.heatmap(corr_raw, annot=True, fmt='.2f', cmap='coolwarm',
-    #                      cbar_kws={'label': 'Correlation'})
-    #     plt.title('Correlation Matrix of Scaled Raw Features')
-    #     # Highlight row/column for Power
-    #     idx = corr_raw.columns.get_loc('Power')
-    #     # rectangle around Power column
-    #     ax.add_patch(Rectangle((idx, 0), 1, len(corr_raw), fill=False, edgecolor='black', lw=3))
-    #     # rectangle around Power row
-    #     ax.add_patch(Rectangle((0, idx), len(corr_raw), 1, fill=False, edgecolor='black', lw=3))
-    #     plt.tight_layout()
-    #     plt.show()
-
-    #     # 5.1 ACF & PACF of raw Power
-    #     plt.figure()
-    #     plot_acf(y, lags=48)
-    #     plt.title(f'Autocorrelation of {col}')
-    #     plt.show()
-
-    #     plt.figure()
-    #     plot_pacf(y, lags=48)
-    #     plt.title(f'Partial Autocorrelation of {col}')
-    #     plt.show()
-
-    #     # 5.2 Stationarity & ACF/PACF on first-differenced Power
-    #     y = df_raw[col]
-    #     y_diff = y.diff().dropna()
-    #     plt.figure(figsize=(8,3))
-    #     plot_acf(y_diff, lags=48)
-    #     plt.title(f'ACF of Δ{col}')
-    #     plt.tight_layout()
-    #     plt.show()
-    #     plt.figure(figsize=(8,3))
-    #     plot_pacf(y_diff, lags=48)
-    #     plt.title(f'PACF of ΔP{col}')
-    #     plt.tight_layout()
-    #     plt.show()
 
 
-    #     # 6. Multi-seasonal decomposition (weekly & annual)
-    #     try:
-    #         # MSTL now only takes 'periods'
-    #         from statsmodels.tsa.seasonal import MSTL
-    #         decomp = MSTL(y, periods=[168, 8760]).fit()
-    #         fig = decomp.plot()
-    #     except ImportError:
-    #         # first extract weekly seasonality
-    #         stl_week = STL(y, period=168).fit()
-    #         resid = y - stl_week.seasonal
-    #         # then extract annual seasonality from the residual
-    #         stl_year = STL(resid, period=8760).fit()
-    #         fig = stl_year.plot()
+    def plot_time_series(self, 
+                         folder_path, 
+                         site_index,
+                         variable_name: str = 'Power',
+                         starting_time: str = '2017-01-01 00:00',
+                         ending_time: str = '2021-12-31 23:00'):
+        """
+            1. Plot raw time series data of the target variable (default: Power) for a specified site and time range.
+        """
+        df_raw = pd.read_csv(folder_path / f"Location{site_index}.csv", index_col=0, parse_dates=True).sort_index()
 
-    #     fig.set_size_inches(10, 8)
-    #     plt.tight_layout()
-    #     plt.show()
+        df_filtered = df_raw.loc[starting_time:ending_time]
+        col = f"{variable_name}"
+        if col not in df_filtered.columns:
+            raise ValueError(f"Column '{col}' not found in data.")
+        plt.figure(figsize=(10, 4))
+        plt.plot(df_filtered.index, df_filtered[col], label=col)
+        plt.title(f'{col} over Time')
+        plt.xlabel('Time')
+        plt.ylabel(variable_name)
+        plt.legend()
+        plt.tight_layout()
+        plt.show()
 
-    #     # 7. Spectral analysis using Welch's method
-    #     fs = 1.0  # 1 sample per hour
-    #     freqs, psd = welch(y.fillna(method='ffill'), fs=fs,
-    #                     window='hann', nperseg=24*7, noverlap=24*3)
-    #     periods = 1/freqs[1:]
-    #     power_spec = psd[1:]
-    #     plt.figure(figsize=(8,4))
-    #     plt.loglog(periods, power_spec)
-    #     for p,label in [(24,'24 h'), (168,'168 h (weekly)'), (8760,'8760 h (annual)')]:
-    #         plt.axvline(p, linestyle='--', alpha=0.7, label=label)
-    #     plt.xlabel('Period (hours)')
-    #     plt.ylabel('Spectral density')
-    #     plt.title('Welch Periodogram (log–log)')
-    #     plt.legend()
-    #     plt.tight_layout()
-    #     plt.show()
 
-def data_eda(self):
+    def data_eda(self,
+                 variable_name: str = 'Power'):
         """
         Explanatory Data Analysis (EDA):
+
+        Args:
+            variable_name (str): Column prefix of the variable to plot (e.g., 'wind_speed_100m' or 'Power').
+
         Pre-processing:
             - Read the full raw dataset
             - Scale raw data for EDA
@@ -325,10 +173,14 @@ def data_eda(self):
             variable (Power)
         6. Plot the seasonal decomposition of the target variable (Power) to identify trends,
             seasonality, and residuals
-        7. Plot Welch's method for spectral analysis
         """
 
         df_raw = pd.read_csv(self.file_path, index_col=0, parse_dates=True).sort_index()
+
+        # Construct column name for the selected site
+        col = f"{variable_name}"
+        if col not in df_raw.columns:
+            raise ValueError(f"Column '{col}' not found in data.")
 
         # Scale raw data for EDA
         scaler_eda = MinMaxScaler()
@@ -338,7 +190,7 @@ def data_eda(self):
             index=df_raw.index
         )
 
-        # 3. Histograms of scaled raw features
+        # Histograms of scaled raw features
         plt.figure(figsize=(10, 6))
         df_scaled_raw.hist(bins=50)
         plt.suptitle('Histograms of Scaled Raw Features')
@@ -352,31 +204,25 @@ def data_eda(self):
         print("Extracted time-based features (first 5 rows):")
         print(df_raw[['hour', 'day_of_week', 'month']].head(), "")
 
-        # 1. Plot each year's raw time series of Power in subplots
-        years = sorted(df_raw.index.year.unique())
-        n_years = len(years)
-        fig, axes = plt.subplots(n_years, 1, figsize=(10, 2 * n_years), sharex=False)
-        if n_years == 1:
-            axes = [axes]
-        for ax, year in zip(axes, years):
-            df_year = df_raw[df_raw.index.year == year]
-            ax.plot(df_year.index, df_year['Power'], label=f'Power {year}')
-            ax.set_title(f'Power over Time: {year}')
-            ax.set_xlabel('Time')
-            ax.set_ylabel('Power')
-            ax.legend()
+        # 1. Plot raw time series of the selected variable
+        plt.figure(figsize=(10, 4))
+        plt.plot(df_raw.index, df_raw[col], label=col)
+        plt.title(f'{col} over Time')
+        plt.xlabel('Time')
+        plt.ylabel(variable_name)
+        plt.legend()
         plt.tight_layout()
         plt.show()
 
         # 2. Histogram + KDE of raw Power
         fig, ax1 = plt.subplots()
-        df_raw['Power'].hist(bins=50, alpha=0.6, ax=ax1, label='Count')
+        df_raw[col].hist(bins=50, alpha=0.6, ax=ax1, label='Count')
         ax2 = ax1.twinx()
-        df_raw['Power'].plot(kind='kde', ax=ax2, color='C1', label='KDE')
-        ax1.set_xlabel('Power')
+        df_raw[col].plot(kind='kde', ax=ax2, label='KDE')
+        ax1.set_xlabel(variable_name)
         ax1.set_ylabel('Count')
         ax2.set_ylabel('Density')
-        fig.suptitle('Power: Histogram & KDE')
+        fig.suptitle(f'{variable_name}: Histogram & KDE')
         ax1.legend(loc='upper left')
         ax2.legend(loc='upper right')
         plt.show()
@@ -432,38 +278,3 @@ def data_eda(self):
         plt.tight_layout()
         plt.show()
 
-
-        # 6. Multi-seasonal decomposition (weekly & annual)
-        try:
-            # MSTL now only takes 'periods'
-            from statsmodels.tsa.seasonal import MSTL
-            decomp = MSTL(y, periods=[168, 8760]).fit()
-            fig = decomp.plot()
-        except ImportError:
-            # first extract weekly seasonality
-            stl_week = STL(y, period=168).fit()
-            resid = y - stl_week.seasonal
-            # then extract annual seasonality from the residual
-            stl_year = STL(resid, period=8760).fit()
-            fig = stl_year.plot()
-
-        fig.set_size_inches(10, 8)
-        plt.tight_layout()
-        plt.show()
-
-        # 7. Spectral analysis using Welch's method
-        fs = 1.0  # 1 sample per hour
-        freqs, psd = welch(y.fillna(method='ffill'), fs=fs,
-                        window='hann', nperseg=24*7, noverlap=24*3)
-        periods = 1/freqs[1:]
-        power_spec = psd[1:]
-        plt.figure(figsize=(8,4))
-        plt.loglog(periods, power_spec)
-        for p,label in [(24,'24 h'), (168,'168 h (weekly)'), (8760,'8760 h (annual)')]:
-            plt.axvline(p, linestyle='--', alpha=0.7, label=label)
-        plt.xlabel('Period (hours)')
-        plt.ylabel('Spectral density')
-        plt.title('Welch Periodogram (log–log)')
-        plt.legend()
-        plt.tight_layout()
-        plt.show()
