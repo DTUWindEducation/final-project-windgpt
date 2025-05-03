@@ -17,7 +17,7 @@ def plot_time_series(folder_path,
         raise ValueError(f"Column '{col}' not found in data.")
     plt.figure(figsize=(10, 4))
     plt.plot(df_filtered.index, df_filtered[col], label=col)
-    plt.title(f'{col} over Time')
+    plt.title(f'{col} over Time for Site {site_index}')
     plt.xlabel('Time')
     plt.ylabel(variable_name)
     plt.legend()

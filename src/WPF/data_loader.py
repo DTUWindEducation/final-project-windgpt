@@ -9,7 +9,8 @@ from statsmodels.tsa.seasonal import STL
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 import seaborn as sns
-from scipy.signal import welch
+
+from WPF import plot_time_series
 
 class DataLoader:
     """
@@ -49,11 +50,11 @@ class DataLoader:
         self.data_XY_preparation()
 
         if plot_time_series:
-            self.plot_time_series(folder_path,
-                                  site_index=site_index,
-                                  variable_name='Power',
-                                  starting_time='2017-01-01 00:00',
-                                  ending_time='2021-12-31 23:00')
+            plot_time_series(folder_path,
+                             site_index=site_index,
+                             variable_name='Power',
+                             starting_time='2017-01-01 00:00',
+                             ending_time='2021-12-31 23:00')
 
         if data_eda_bool:
             self.data_eda()
