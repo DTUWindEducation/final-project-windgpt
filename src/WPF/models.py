@@ -92,7 +92,8 @@ class ModelRunner(DataLoader):
         """
         if self.model_type == 'baseline':
             return  # No training step for persistence model
-        self.model.fit(self.X_train_2D, self.Y_train)
+        self.model.fit(self.X_train_2D, self.Y_train.ravel() if self.forecast_dim == 1 
+                                   else self.Y_train)
 
     def predict(self):
         """

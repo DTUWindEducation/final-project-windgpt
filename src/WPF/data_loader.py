@@ -163,7 +163,6 @@ class DataLoader:
         )
 
         # Histograms of scaled raw features
-        plt.figure(figsize=(10, 6))
         df_scaled_raw.hist(bins=50)
         plt.suptitle('Histograms of Scaled Raw Features')
         plt.tight_layout(rect=[0, 0.03, 1, 0.95])
@@ -173,8 +172,6 @@ class DataLoader:
         df_raw['hour'] = df_raw.index.hour
         df_raw['day_of_week'] = df_raw.index.day_name()
         df_raw['month'] = df_raw.index.month
-        print("Extracted time-based features (first 5 rows):")
-        print(df_raw[['hour', 'day_of_week', 'month']].head(), "")
 
         # 1. Plot raw time series of the selected variable
         plt.figure(figsize=(10, 4))
@@ -204,7 +201,7 @@ class DataLoader:
                            ('day_of_week', 'Day of Week'),
                            ('month', 'Month')]:
             plt.figure(figsize=(10, 4))
-            sns.boxplot(x=df_raw[grp], y=df_raw['Power'])
+            sns.boxplot(data=df_raw, x=grp, y='Power')
             plt.title(f'Power by {title}')
             plt.xlabel(title)
             plt.ylabel('Power')
@@ -225,27 +222,19 @@ class DataLoader:
         plt.tight_layout()
         plt.show()
 
-        # 5.1 ACF & PACF of raw Power
-        plt.figure()
+        # 5.1 ACF of raw Power
         plot_acf(df_raw['Power'], lags=48)
         plt.title('Autocorrelation of Power')
         plt.show()
 
-        plt.figure()
-        plot_pacf(df_raw['Power'], lags=48)
-        plt.title('Partial Autocorrelation of Power')
-        plt.show()
 
-        # 5.2 Stationarity & ACF/PACF on first-differenced Power
+        # 5.2 Stationarity & ACF on first-differenced Power
+
         y = df_raw['Power']
         y_diff = y.diff().dropna()
-        plt.figure(figsize=(8,3))
         plot_acf(y_diff, lags=48)
         plt.title('ACF of ΔPower')
         plt.tight_layout()
         plt.show()
-        plt.figure(figsize=(8,3))
-        plot_pacf(y_diff, lags=48)
-        plt.title('PACF of ΔPower')
-        plt.tight_layout()
+
         plt.show()

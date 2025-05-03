@@ -6,7 +6,8 @@ from WPF.models import ModelRunner
 
 folder_path = Path(__file__).parent.parent / "inputs"
 
-loc1 = DataLoader(folder_path, train_test_split=0.70, site_index=1)
+loc1 = DataLoader(folder_path, train_test_split=0.70, site_index=1, data_eda_bool=True)
+
 
 plot_time_series(
     folder_path=folder_path,
