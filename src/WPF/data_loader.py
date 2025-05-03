@@ -1,16 +1,11 @@
 """Importing all necessary modules"""
 import pandas as pd
 import numpy as np
-
 from sklearn.preprocessing import MinMaxScaler
 from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
-from statsmodels.tsa.seasonal import STL
-
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 import seaborn as sns
-
-from WPF import plot_time_series
 
 class DataLoader:
     """
@@ -43,11 +38,11 @@ class DataLoader:
         self.lag_dim = lag_dim
         self.forecast_dim = forecast_dim
         self.train_test_split = train_test_split
-        
+
         # Call methods
         self.data_cleaning()
         self.data_scaling()
-        self.data_XY_preparation()
+        self.data_xy_preparation()
 
         if plot_time_series:
             plot_time_series(folder_path,
@@ -83,12 +78,12 @@ class DataLoader:
         scaled_df = self.clean_data.copy()
         scaled_df[self.columns[:-1]] = scaled_data
         self.scaled_data = scaled_df.copy()
-        
+
         # Save the scaler for inverse transformation later if needed
         self.scaler = scaler
 
 
-    def data_XY_preparation(self):
+    def data_xy_preparation(self):
 
         """ Create sliding windows X (lag_dim) and Y (forecast_dim).
         
@@ -98,11 +93,11 @@ class DataLoader:
         l = self.lag_dim
         m = self.forecast_dim
         np_data = self.scaled_data.values   # Convert to the numpy array for slicing data
-        N = np_data.shape[0]        # Total number of data points
+        N = np_data.shape[0]        # Total number of data points; pylint: disable=invalid-name
 
         # Create empty lists to store the input sequences and output values
-        X = []
-        Y = []
+        X = []  # pylint: disable=invalid-name
+        Y = []  # pylint: disable=invalid-name
 
         for i in range(N-l-m+1):
             # Create the input sequence (X) and output value (y)
@@ -111,9 +106,9 @@ class DataLoader:
 
             X.append(x)
             Y.append(y)
-    
+
         self.X = np.array(X)
-        self.X_2D = np.reshape(self.X, (self.X.shape[0], self.X.shape[1]*self.X.shape[2]))  
+        self.X_2D = np.reshape(self.X, (self.X.shape[0], self.X.shape[1]*self.X.shape[2]))
         self.Y = np.array(Y)
 
         # split the data into training and testing sets
@@ -124,7 +119,7 @@ class DataLoader:
         self.X_test = self.X[split_index:]
         self.X_test_2D = self.X_2D[split_index:]
         self.Y_test = self.Y[split_index:]
-        
+
         self.train_index = self.index[l:self.X_train.shape[0]+l]
         self.test_index = self.index[l+self.X_train.shape[0]:]
 
@@ -135,7 +130,8 @@ class DataLoader:
         Explanatory Data Analysis (EDA):
 
         Args:
-            variable_name (str): Column prefix of the variable to plot (e.g., 'wind_speed_100m' or 'Power').
+            variable_name (str): Column prefix of the variable to plot 
+            (e.g., 'wind_speed_100m' or 'Power').
 
         Pre-processing:
             - Read the full raw dataset
@@ -253,4 +249,3 @@ class DataLoader:
         plt.title('PACF of ΔPower')
         plt.tight_layout()
         plt.show()
-
