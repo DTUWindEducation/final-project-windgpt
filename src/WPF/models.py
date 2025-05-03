@@ -2,7 +2,6 @@ from pathlib import Path
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-from sklearn.preprocessing import MinMaxScaler
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 from sklearn.svm import SVR
@@ -24,6 +23,8 @@ class ModelRunner(DataLoader):
             self.model = SVR()
 
         elif model_type == 'baseline':
+            self.forecast_dim = 1  # Set forecast_dim to 1 for persistence model
+            self.data_XY_preparation()
             self.model = None  # No training required
 
         else:
