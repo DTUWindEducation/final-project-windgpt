@@ -7,7 +7,7 @@ Developed by Marco Saretta, Thomas Røder and Lukas Karkossa in cooperatiom with
 
 ## Overview
 
-WindGPT is a lightweight, modular Python package designed to streamline the end-to-end workflow for wind-power time-series analysis and forecasting. At its basis is a `DataLoader` class that:
+WPF (Wind Power Forecasting) is a lightweight, modular Python package designed to streamline the end-to-end workflow for wind-power time-series analysis and forecasting. At its basis is a `DataLoader` class that:
 
 1. **Ingests** raw CSV data (power output plus meteorological variables)  
 2. **Cleans** it by dropping unneeded columns and parsing timestamps  
@@ -20,7 +20,7 @@ Build up on that basis there are three forecasting models integrated:
 2. linear regression model
 3. support vector machine
 
-On top of that foundation you can plug in your own forecasting models—ML or statistical—and easily train, validate, and visualize predictions. WindGPT requires only standard scientific-Python dependencies (NumPy, pandas, scikit-learn, statsmodels, Matplotlib, Seaborn) and can be installed in editable mode for rapid iteration.
+On top of that foundation you can plug in your own forecasting models—ML or statistical—and easily train, validate, and visualize predictions. WPF requires a few scientific-Python dependencies (NumPy, pandas, scikit-learn, statsmodels, Matplotlib, Seaborn) and can be installed in editable mode for rapid iteration.
 
 ## Quick-start guide
 
@@ -32,11 +32,24 @@ In order to quickly run the code like it is, you must fo the following:
 git clone <hhttps://github.com/DTUWindEducation/final-project-windgpt>
  - Make sure the working directory is the repository folder
 
-**Step 2:** Create a new/empty environment?
-    activate this environment
+**Step 2:** Create a new environment
+ - Create a new environment before installing the required packages. This is not strictly necessary, but it ensures no version conflicts. 
 
 **Step 3:** Required dependencies
-- Since we developed our own package, you simpliy need to install it and all dependencies are installed with it automatically. To install it correclty you need to be in the "main folder" final-project-windgpt and type the command pip install . 
+- Before installing the WPF, install the required dependencies using pip by typing the below command in an Anaconda prompt or similar (e.g. VS code terminal):
+   ``` Anaconda prompt
+   pip install numpy==2.2.3 pandas==2.2.3 scikit-learn==1.6.1 statsmodels==0.14.4 matplotlib==3.10.1 seaborn==0.13.2 
+   ```
+   Note that other version may also work, but the package has been tested with these versions.
+
+- With the dependencies in order, the WPF package can be installed. To install it correclty you need open an Anaconda prompt (or similar) in the "main folder" final-project-windgpt and type the command:
+   ```
+   pip install .
+   ```
+   or to install an editable version:
+   ```
+   pip install -e .
+   ```
    
 - to check if the package is correctly installed you can use the command pip list and see if the package was installed.
 
