@@ -1,15 +1,11 @@
 """Importing all necessary modules"""
 import pandas as pd
 import numpy as np
-
 from sklearn.preprocessing import MinMaxScaler
 from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
-from statsmodels.tsa.seasonal import STL
-
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 import seaborn as sns
-from scipy.signal import welch
 
 class DataLoader:
     """
@@ -42,18 +38,18 @@ class DataLoader:
         self.lag_dim = lag_dim
         self.forecast_dim = forecast_dim
         self.train_test_split = train_test_split
-        
+
         # Call methods
         self.data_cleaning()
         self.data_scaling()
-        self.data_XY_preparation()
+        self.data_xy_preparation()
 
         if plot_time_series:
-            self.plot_time_series(folder_path,
-                                  site_index=site_index,
-                                  variable_name='Power',
-                                  starting_time='2017-01-01 00:00',
-                                  ending_time='2021-12-31 23:00')
+            plot_time_series(folder_path,
+                             site_index=site_index,
+                             variable_name='Power',
+                             starting_time='2017-01-01 00:00',
+                             ending_time='2021-12-31 23:00')
 
         if data_eda_bool:
             self.data_eda()
@@ -82,12 +78,12 @@ class DataLoader:
         scaled_df = self.clean_data.copy()
         scaled_df[self.columns[:-1]] = scaled_data
         self.scaled_data = scaled_df.copy()
-        
+
         # Save the scaler for inverse transformation later if needed
         self.scaler = scaler
 
 
-    def data_XY_preparation(self):
+    def data_xy_preparation(self):
 
         """ Create sliding windows X (lag_dim) and Y (forecast_dim).
         
@@ -97,11 +93,11 @@ class DataLoader:
         l = self.lag_dim
         m = self.forecast_dim
         np_data = self.scaled_data.values   # Convert to the numpy array for slicing data
-        N = np_data.shape[0]        # Total number of data points
+        N = np_data.shape[0]        # Total number of data points; pylint: disable=invalid-name
 
         # Create empty lists to store the input sequences and output values
-        X = []
-        Y = []
+        X = []  # pylint: disable=invalid-name
+        Y = []  # pylint: disable=invalid-name
 
         for i in range(N-l-m+1):
             # Create the input sequence (X) and output value (y)
@@ -110,9 +106,9 @@ class DataLoader:
 
             X.append(x)
             Y.append(y)
-    
+
         self.X = np.array(X)
-        self.X_2D = np.reshape(self.X, (self.X.shape[0], self.X.shape[1]*self.X.shape[2]))  
+        self.X_2D = np.reshape(self.X, (self.X.shape[0], self.X.shape[1]*self.X.shape[2]))
         self.Y = np.array(Y)
 
         # split the data into training and testing sets
@@ -123,34 +119,9 @@ class DataLoader:
         self.X_test = self.X[split_index:]
         self.X_test_2D = self.X_2D[split_index:]
         self.Y_test = self.Y[split_index:]
-        
+
         self.train_index = self.index[l:self.X_train.shape[0]+l]
         self.test_index = self.index[l+self.X_train.shape[0]:]
-
-
-    def plot_time_series(self, 
-                         folder_path, 
-                         site_index,
-                         variable_name: str = 'Power',
-                         starting_time: str = '2017-01-01 00:00',
-                         ending_time: str = '2021-12-31 23:00'):
-        """
-            1. Plot raw time series data of the target variable (default: Power) for a specified site and time range.
-        """
-        df_raw = pd.read_csv(folder_path / f"Location{site_index}.csv", index_col=0, parse_dates=True).sort_index()
-
-        df_filtered = df_raw.loc[starting_time:ending_time]
-        col = f"{variable_name}"
-        if col not in df_filtered.columns:
-            raise ValueError(f"Column '{col}' not found in data.")
-        plt.figure(figsize=(10, 4))
-        plt.plot(df_filtered.index, df_filtered[col], label=col)
-        plt.title(f'{col} over Time')
-        plt.xlabel('Time')
-        plt.ylabel(variable_name)
-        plt.legend()
-        plt.tight_layout()
-        plt.show()
 
 
     def data_eda(self,
@@ -159,7 +130,8 @@ class DataLoader:
         Explanatory Data Analysis (EDA):
 
         Args:
-            variable_name (str): Column prefix of the variable to plot (e.g., 'wind_speed_100m' or 'Power').
+            variable_name (str): Column prefix of the variable to plot 
+            (e.g., 'wind_speed_100m' or 'Power').
 
         Pre-processing:
             - Read the full raw dataset
@@ -191,7 +163,6 @@ class DataLoader:
         )
 
         # Histograms of scaled raw features
-        plt.figure(figsize=(10, 6))
         df_scaled_raw.hist(bins=50)
         plt.suptitle('Histograms of Scaled Raw Features')
         plt.tight_layout(rect=[0, 0.03, 1, 0.95])
@@ -201,8 +172,6 @@ class DataLoader:
         df_raw['hour'] = df_raw.index.hour
         df_raw['day_of_week'] = df_raw.index.day_name()
         df_raw['month'] = df_raw.index.month
-        print("Extracted time-based features (first 5 rows):")
-        print(df_raw[['hour', 'day_of_week', 'month']].head(), "")
 
         # 1. Plot raw time series of the selected variable
         plt.figure(figsize=(10, 4))
@@ -232,7 +201,7 @@ class DataLoader:
                            ('day_of_week', 'Day of Week'),
                            ('month', 'Month')]:
             plt.figure(figsize=(10, 4))
-            sns.boxplot(x=df_raw[grp], y=df_raw['Power'])
+            sns.boxplot(data=df_raw, x=grp, y='Power')
             plt.title(f'Power by {title}')
             plt.xlabel(title)
             plt.ylabel('Power')
@@ -253,28 +222,19 @@ class DataLoader:
         plt.tight_layout()
         plt.show()
 
-        # 5.1 ACF & PACF of raw Power
-        plt.figure()
+        # 5.1 ACF of raw Power
         plot_acf(df_raw['Power'], lags=48)
         plt.title('Autocorrelation of Power')
         plt.show()
 
-        plt.figure()
-        plot_pacf(df_raw['Power'], lags=48)
-        plt.title('Partial Autocorrelation of Power')
-        plt.show()
 
-        # 5.2 Stationarity & ACF/PACF on first-differenced Power
+        # 5.2 Stationarity & ACF on first-differenced Power
+
         y = df_raw['Power']
         y_diff = y.diff().dropna()
-        plt.figure(figsize=(8,3))
         plot_acf(y_diff, lags=48)
         plt.title('ACF of ΔPower')
         plt.tight_layout()
         plt.show()
-        plt.figure(figsize=(8,3))
-        plot_pacf(y_diff, lags=48)
-        plt.title('PACF of ΔPower')
-        plt.tight_layout()
-        plt.show()
 
+        plt.show()
