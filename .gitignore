@@ -1,6 +1,6 @@
 # files to ignore in this repo
-inputs/
 outputs/
+*.DS_store
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
