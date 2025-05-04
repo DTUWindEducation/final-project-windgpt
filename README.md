@@ -50,14 +50,22 @@ git clone <hhttps://github.com/DTUWindEducation/final-project-windgpt>
  Execute the main script:
  Go to the examples directory and run the script with
  - python main.py
-This script processes the wind data for a specific location, and runs the chosen forecasting model, for x hours.
+This script will process the wind data for a specific location and run the selected forecasting models for the specified time period.
 
 **Step 5:** Review Outputs:
-- Review the generated plots showing the predicted power output for the specific location
+- After the simulation completes, review the generated plots displaying the predicted power output for the chosen location.
+- The results include visualizations of the model predictions versus actual values, enabling you to assess forecasting
+performance.
 
 ## Architecture & Functionality
 
-To run the full model you just need to run the main.py script. This will call the modelrunner class and dataloader class which are described in detail below. On top of that there is a small plotting functionality implemented in init.py just to plot the raw time series of a certain attribute. The other functions are implemented within the classes. A graphical abstract of the workflow of model is included below. On top of the main workflow, there are testing functionalities implemented, which can be run to check the code is working fine.
+Running the full model is straightforward-simply execute the main.py script. This script orchestrates the following components:
+- **ModelRunner Class:** Handles model training, prediction, and evaluation for various forecasting algorithms (e.g., linear regression, SVM, baseline).
+- **DataLoader Class:** Loads and preprocesses the input data, performs exploratory data analysis (EDA), and prepares datasets for training and testing.
+- **Plotting Functionality:** A utility in __init__.py allows you to visualize raw time series data for any attribute before modeling.
+- **Workflow Overview:** The overall workflow is illustrated in the graphical abstract below, showing how data flows from loading, through modeling, to result visualization.
+- **Testing:** Additional testing functionalities are provided to verify that the codebase is working as expected.
+With this modular structure, you can easily extend or adapt the workflow to new datasets, models, or analysis tasks.
 
 ![Workflow Diagram](./architecture.svg)
 
