@@ -57,7 +57,156 @@ This script processes the wind data for a specific location, and runs the chosen
 
 ## Architecture & Functionality
 
-The overall archticture is displayed below. 
+To run the full model you just need to run the main.py script. This will call the modelrunner class and dataloader class which are described in detail below. On top of that there is a small plotting functionality implemented in init.py just to plot the raw time series of a certain attribute. The other functions are implemented within the classes. A graphical abstract of the workflow of model is included below. On top of the main workflow, there are testing functionalities implemented, which can be run to check the code is working fine.
+
+![Workflow Diagram](./architecture.svg)
+
+A description of the code can be also found within the single scripts. An overview of the most important functioanlities is described below.
+
+
+### ModelRunner Class
+
+#### Overview
+The `ModelRunner` class, define in models.py provides a unified interface for training, predicting, evaluating, and visualizing time series forecasting models. It utilizes the `DataLoader` class (described below) for seamless data preparation and supports multiple model types, including linear regression, support vector machines (SVM), and a baseline persistence model.
+
+---
+
+
+**Parameters**
+
+| Parameter         | Description                                                                                  |
+|-------------------|----------------------------------------------------------------------------------------------|
+| `folder_path`     | Path to the folder containing the dataset.                                                   |
+| `site_index`      | Index of the site to load data from (default: `1`).                                         |
+| `lag_dim`         | Number of lag features to use (default: `10`).                                              |
+| `forecast_dim`    | Number of steps ahead to forecast (default: `1`).                                           |
+| `train_test_split`| Proportion of data for training (default: `0.7`).                                           |
+| `model_type`      | Model to use: `'linear_regression'`, `'svm'`, or `'baseline'` (default: `'linear_regression'`). |
+
+
+---
+
+#### Supported Models
+
+- **Linear Regression**: Standard regression for time series.
+- **Support Vector Machine (SVM)**: Regression with support vector machines. Only supports single-step forecasts.
+- **Baseline (Persistence)**: Uses the last observed value as the prediction. Only supports single-step forecasts.
+
+---
+
+#### Key Attributes
+
+| Attribute    | Description                                                                              |
+|--------------|------------------------------------------------------------------------------------------|
+| `model_type` | The type of model being used.                                                            |
+| `model`      | The instantiated model object (e.g., `LinearRegression`, `SVR`, or `None` for baseline). |
+| `Y_pred`     | Model predictions for the test set.                                                      |
+| `result_df`  | DataFrame with actual and predicted values for the test set.                             |
+
+---
+
+#### Core Methods
+
+#### `train()`
+Trains the selected model using the training dataset. No training is performed for the baseline model.
+
+#### `predict()`
+Generates predictions for the test set:
+- For baseline, uses the last observed value (persistence).
+- For other models, uses the model's `predict` method.
+
+#### `compute_errors()`
+Calculates and prints key regression metrics:
+- Mean Squared Error (MSE)
+- Mean Absolute Error (MAE)
+- R² Score
+
+#### `plot_results(hours_to_plot=48)`
+Plots actual vs. predicted values for a specified number of hours (default: 48). Automatically adjusts if less data is available.
+
+#### `post_process()`
+Aligns predictions with the test set and prepares the `result_df` DataFrame, handling both single- and multi-step forecasts.
+
+#### `execute()`
+Runs the full pipeline:
+1. Train the model.
+2. Predict on the test set.
+3. Compute evaluation metrics.
+4. Post-process predictions.
+5. Visualize results.
+
+#### Notes
+
+- **Forecast Horizon**: SVM and baseline models only support single-step prediction (`forecast_dim=1`). If a higher value is set, it will be reset to 1 with a warning.
+- **Evaluation Metrics**: Uses standard regression metrics (MSE, MAE, R²) for performance assessment.
+- **Visualization**: The `plot_results` method provides a quick comparison of actual vs. predicted values for easy interpretation.
+
+
+
+### DataLoader
+
+**Purpose**  
+Load, clean, scale, window, and (optionally) explore time‐series data from a CSV for downstream forecasting.
+
+**Parameters**  
+| Parameter | Description |  
+|-----------|-------------|  
+| `folder_path` | Path to the folder containing `Location{site_index}.csv` |  
+| `site_index` | Site identifier (default: `1`) |  
+| `lag_dim` | Look-back window size (default: `10`) |  
+| `forecast_dim` | Forecast horizon window size (default: `1`) |  
+| `train_test_split` | Fraction of data reserved for training (default: `0.7`) |  
+| `plot_time_series` | If `True`, generates a time-series plot (default: `False`) |  
+| `data_eda_bool` | If `True`, runs full EDA (default: `False`) |  
+
+---
+
+#### Key Attributes
+| Attribute | Description |  
+|-----------|-------------|  
+| `file_path` | Full path to the CSV file (e.g., `folder_path/Location1.csv`) |  
+| `clean_data` | DataFrame after removing unused columns |  
+| `scaled_data` | MinMax-scaled DataFrame |  
+| `scaler` | Fitted `MinMaxScaler` for inverse transformations |  
+| `X`, `Y` | Windowed arrays for features (`n_windows, lag_dim, n_features`) and targets (`n_windows, forecast_dim`) |  
+| `X_train`, `Y_train`, `X_test`, `Y_test` | Train/test splits |  
+| `train_index`, `test_index` | Timestamps corresponding to each window |  
+
+---
+
+#### Core Methods
+
+##### `data_cleaning()`
+- Reads the CSV file and parses dates.
+- Retains only `windspeed_100m` and `Power` columns.
+
+##### `data_scaling()`
+- Applies MinMax scaling to features.
+- Stores scaled data in `scaled_data` and the scaler in `scaler`.
+
+##### `data_xy_preparation()`
+- Creates lagged input windows (`X`) and horizon-ahead targets (`Y`).
+- Splits data into training and testing sets.
+- Records timestamps for each window in `train_index` and `test_index`.
+
+##### `data_eda(variable_name='Power')` *(Optional)*
+Generates exploratory plots if `data_eda_bool=True`:
+- Histograms and KDE plots
+- Boxplots by hour/day/month
+- Correlation heatmap
+- ACF/PACF plots
+
+---
+
+#### Workflow of data_loader
+1. **Initialization**: Automatically runs `data_cleaning()`, `data_scaling()`, and `data_xy_preparation()`.
+2. **Optional Plots**: 
+   - Time-series visualization if `plot_time_series=True`.
+   - Full EDA suite if `data_eda_bool=True`.
+
+---
+
+
 
 ## Peer review
 

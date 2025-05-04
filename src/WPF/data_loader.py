@@ -143,8 +143,6 @@ class DataLoader:
         4. Plot a correlation matrix of all scaled features
         5. Plot autocorrelation and partial autocorrelation plots for the target
             variable (Power)
-        6. Plot the seasonal decomposition of the target variable (Power) to identify trends,
-            seasonality, and residuals
         """
 
         df_raw = pd.read_csv(self.file_path, index_col=0, parse_dates=True).sort_index()
